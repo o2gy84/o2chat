@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+from waflib.Build import BuildContext
+import os
+import subprocess
+
+
+APPNAME = 'chatserver'
+VERSION = '0.0.1'
+
+top = '.'
+out = 'BUILD'
+
+boost_name = 'boost%s' % os.getenv('BOOST_VERSION', '156')
+
+def options(ctx):
+    ctx.load('compiler_cxx')
+
+def configure(ctx):
+    ctx.env.CXX = ['/usr/bin/g++-5']
+    ctx.load('compiler_cxx')
+
+    ctx.env.DEFINES_API_EXTERNAL = [
+        'CHECK_ALLOC', '_REENTRANT', '_FORTIFY_SOURCE=2',
+        'BOOST_ASIO_STRAND_IMPLEMENTATIONS=250000',
+        'BOOST_ASIO_ENABLE_SEQUENTIAL_STRAND_ALLOCATION',
+        #'BOOST_ASIO_ENABLE_HANDLER_TRACKING'
+    ]
+
+    ctx.env.LIBPATH_API_EXTERNAL = [
+        '/usr/lib64/' + boost_name,
+        '/usr/lib/' + boost_name,
+        '/usr/lib/x86_64-linux-gnu/',
+    ]
+
+    ctx.env.LIB_API_EXTERNAL += ['boost_system']
+    ctx.env.LIB_API_EXTERNAL += ['z', 'crypto', 'ssl', 'pthread', 'rt']
+
+    link_flags = [
+        '-fdata-sections', '-ffunction-sections', '-Wl,--gc-sections', '-ggdb3',
+    ]
+
+    cflags = [
+        '-Werror', '-pedantic', '-pedantic-errors', '-Wall', '-Wextra', '-Wno-sign-compare',
+        '-fstrict-aliasing', '-fstack-protector-all', '-fdata-sections', '-ffunction-sections',
+        '-ggdb3', '-std=c++14',
+        '-O2',
+    ]
+
+    external_includes = [
+        '/usr/include/' + boost_name,
+    ]
+    system_include_flags = ["-isystem" + path for path in external_includes]
+
+    cflags += system_include_flags
+
+    ctx.env.DEFINES_API = ctx.env.DEFINES_API_EXTERNAL
+    ctx.env.INCLUDES_API = [ctx.path.find_dir('.').abspath(), '../../']
+    ctx.env.INCLUDES_API += ['../../third_party/rapidjson-1.0.2/include/']
+    ctx.env.INCLUDES_API += ['../../third_party/']
+    ctx.env.LIBPATH_API = ctx.env.LIBPATH_API_EXTERNAL
+    ctx.env.LINKFLAGS_API = link_flags
+    ctx.env.CFLAGS_API    = cflags
+    ctx.env.CXXFLAGS_API  = cflags
+    ctx.env.LIB_API = ctx.env.LIB_API_EXTERNAL
+    ctx.env.STLIB_API = ['property', 'o2logger', ]
+    ctx.env.STLIBPATH_API = ['../../../third_party/libproperty/src/BUILD']
+    ctx.env.STLIBPATH_API += ['../../../third_party/o2logger/src/BUILD']
+
+def build(ctx):
+    common_source = ['../../common/utils.cpp', '../../net/client.cpp',
+                     '../../common/sysutils.cpp', ]
+
+    ctx.program(
+            target       = APPNAME,
+            use          = 'API',
+            source       = ['main.cpp', 'server.cpp', 'apiclient.cpp', 'database_worker.cpp',
+                            'database.cpp', 'inmemory_dbconn.cpp',
+                            'apiclient_utils.cpp', ] + common_source,
+    )

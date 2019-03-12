@@ -1,0 +1,50 @@
+CREATE DATABASE test2;
+USE test2;
+
+CREATE TABLE chat (
+	id INT NOT NULL AUTO_INCREMENT,
+    name VARBINARY(512) NOT NULL,
+    PRIMARY KEY (id)
+) CHARACTER SET utf8mb4, ENGINE InnoDB;
+
+CREATE TABLE `user` (
+	id INT NOT NULL AUTO_INCREMENT,
+	self_chat_id INT NOT NULL,
+    name VARBINARY(512) NOT NULL,
+    password VARBINARY(512) NOT NULL,
+    stpath VARBINARY(512) NOT NULL,
+    heartbit TIMESTAMP NOT NULL,
+    PRIMARY KEY (id)
+) CHARACTER SET utf8mb4, ENGINE InnoDB;
+
+CREATE TABLE chatuser (
+	user_id INT NOT NULL,
+    chat_id INT NOT NULL,
+    KEY (user_id),
+    KEY (chat_id),
+    CONSTRAINT `cu_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `cu_chat_id` FOREIGN KEY (`chat_id`) REFERENCES `chat` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) CHARACTER SET utf8mb4, ENGINE InnoDB;
+
+CREATE TABLE message (
+	id INT NOT NULL AUTO_INCREMENT,
+	user_id INT NOT NULL,
+	chat_id INT NOT NULL,
+    flags INT NOT NULL,
+    time TIMESTAMP NOT NULL,
+    text VARBINARY(512) NOT NULL,
+    PRIMARY KEY (id),
+    KEY (user_id),
+    KEY (chat_id),
+    KEY (time),
+    CONSTRAINT `cm_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `cm_chat_id` FOREIGN KEY (`chat_id`) REFERENCES `chat` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) CHARACTER SET utf8mb4, ENGINE InnoDB;
+
+CREATE USER 'me' IDENTIFIED BY '123';
+
+GRANT SELECT, INSERT, UPDATE, DELETE, DROP ON test2.`user` TO 'me';
+GRANT SELECT, INSERT, UPDATE, DELETE, DROP ON test2.chat TO 'me';
+GRANT SELECT, INSERT, UPDATE, DELETE, DROP ON test2.chatuser TO 'me';
+GRANT SELECT, INSERT, UPDATE, DELETE, DROP ON test2.message TO 'me';
+
