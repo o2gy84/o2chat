@@ -1,6 +1,7 @@
 ## o2chat
 
-Real-time chat system, based on client server architecture.
+Real-time chat system, based on boost.asio.  
+Separated client and server, written on C++.
 
 ---
 
